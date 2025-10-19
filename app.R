@@ -8,7 +8,7 @@ source("helpers.R")
 # Define UI for application that draws a histogram
 ui <- fluidPage(
 
-  "Correlation Exploration",
+  h2("Correlation Exploration"),
   sidebarLayout(
     sidebarPanel(
       h2("Select Variables to Find Correlation:"),
@@ -119,7 +119,7 @@ server <- function(input, output, session) {
     
 
 
-sample_corr <- reactiveValues(corr_data=NULL, corr_truth=NULL)
+    sample_corr <- reactiveValues(corr_data=NULL, corr_truth=NULL)
     #Create a reactiveValues() object called sample_corr
     #this object should have two elements, corr_data and corr_truth
     #both should be set to null to start with!
@@ -130,7 +130,7 @@ sample_corr <- reactiveValues(corr_data=NULL, corr_truth=NULL)
     # #Uncomment the next large block of code to go in an
     # #observeEvent() to look for the action button (corr_sample)
     # #Note you can highlight and bulk comment/uncomment (ctrl+shift+c or similar on mac)
-
+    observeEvent(input$corr_sample, {
       if(input$hhl_corr == "all"){
         hhl_sub <- HHLvals
       } else if(input$hhl_corr == "english"){
@@ -183,21 +183,26 @@ sample_corr <- reactiveValues(corr_data=NULL, corr_truth=NULL)
                       size = input$corr_n,
                       replace = TRUE,
                       prob = subsetted_data$PWGTP/sum(subsetted_data$PWGTP))
-      
+    
     #   #***You now need to update the sample_corr reactive value object***
     #   #the corr_data argument should be updated to be the subsetted_data[index,]
     #   #the corr_truth argument should be updated to be the correlation between
     #   #the two variables selected. This can be found with this code:
-    sample_corr <- cor(sample_corr$corr_data |> select(corr_vars))[1,2]
+    sample_corr$corr_data <- subsetted_data[index, ]
+    sample_corr$corr_truth <- cor(sample_corr$corr_data[[input$corr_x]],
+                                  sample_corr$corr_data[[input$corr_y]])
+  })
     ####################################################################
 
-
     output$scatPlot <- renderPlot({
-    #validate(
-  #     need(!is.null(sample_corr$corr_data), "Please select your variables, subset, and click the 'Get a Sample!' button.")
-  #   ),
+      validate(
+        need(!is.null(sample_corr$corr_data), 
+           "Please select your variables, subset, and click the 'Get a Sample!' button.")
+      )
+      
       ggplot(sample_corr$corr_data, aes_string(x = isolate(input$corr_x), y = isolate(input$corr_y))) +
-        geom_point()})
+        geom_point()
+      })
     # #Create a renderPlot() object to output a scatter plot
     # #Use the code below to validate that data exists, (this goes in the renderPlot and you'll need 
     # #to install the shinyalert package if you don't have it) and then create the appropriate
